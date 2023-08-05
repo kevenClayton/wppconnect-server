@@ -1,0 +1,59 @@
+name: deploy
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout on branch to deploy
+        uses: actions/checkout@v2
+
+      - name: Downloading Node to build
+        uses: actions/setup-node@master
+        with:
+          node-version: '18.x'
+
+      - name: Installing dependencies
+        run: |
+          cp .env.development .env
+          rm -rf .env.development
+          npm install
+
+      - name: Building
+        run: yarn dev
+
+      - name: Run dev
+        run: yarn build
+
+      - name: Build AWS
+        run: |
+          rm -fr dist-wpp-connect
+          find . -type f ! -path "*/node_modules/*" -exec sed -i 's/api\.reservaai\.com\.br/homologacaoapi\.reservaai\.com\.br/g' {} +
+          find . -type f ! -path "*/node_modules/*" -exec sed -i 's/api\.beachbot\.com\.br/homologacaoapi\.reservaai\.com\.br/g' {} +
+          yarn build
+
+      - name: Deploy via SFTP para Amazon
+        uses: garygrossgarten/github-action-scp@release
+        with:
+          local: dist-wpp-connect
+          remote: /var/www/dist-wpp-connect
+          host: ${{ secrets.HOSTNAME }}
+          username: ${{ secrets.USERNAME }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          privateKey: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Install
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOSTNAME }}
+          username: ${{ secrets.USERNAME }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /var/www/
+            mv enviarmensagem enviarmensagem.old && mv dist-wpp-connect enviarmensagem && rm -fr enviarmensagem.old
