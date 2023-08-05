@@ -19,8 +19,6 @@ jobs:
 
       - name: Installing dependencies
         run: |
-          cp .env.development .env
-          rm -rf .env.development
           npm install
 
       - name: Building
