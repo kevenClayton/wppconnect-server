@@ -61,24 +61,12 @@ jobs:
           echo -e "set-output name=changelog::${changelog-<empty>}\n"
           echo -e "::set-output name=changelog::${changelog}\n"
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy via SFTP para Amazon
+        uses: garygrossgarten/github-action-scp@release
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body: ${{ steps.generate_changelog.outputs.changelog }}
-          draft: false
-          prerelease: false
-
-      - name: Build Swagger Page
-        run: yarn swagger:generate
-
-      - name: Deploy Page
-        uses: peaceiris/actions-gh-pages@v3
-        continue-on-error: true
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./swagger-docs
+          local: dist
+          remote: /var/www/dist-wpp-connect
+          host: ${{ secrets.HOSTNAME }}
+          username: ${{ secrets.USERNAME }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          privateKey: ${{ secrets.PRIVATE_KEY }}
