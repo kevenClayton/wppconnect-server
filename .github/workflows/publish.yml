@@ -38,15 +38,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
-      - name: Install Dependencies
-        run: yarn install
-        env:
-          PUPPETEER_SKIP_DOWNLOAD: true
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Build
-        run: yarn build
-
       - name: Deploy via SFTP para Amazon
         uses: garygrossgarten/github-action-scp@release
         with:
